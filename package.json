@@ -1,0 +1,12 @@
+{
+  "name": "react-life-hooks",
+  "version": "0.1.0",
+  "description": "Add hooks for life cycles of all react components in your app easily.",
+  "main": "lib/index.js",
+  "repository": "https://github.com/EnixCoda/ReactLifeHook",
+  "author": "EnixCoda",
+  "license": "MIT",
+  "peerDependencies": {
+    "react": "^16.0.0"
+  }
+}
