@@ -13,7 +13,13 @@
   "repository": "https://github.com/EnixCoda/ReactLifeHook",
   "author": "EnixCoda",
   "license": "MIT",
+  "scripts": {
+    "build": "rollup index.js --file lib/index.js --format umd --name \"react-life-hook\""
+  },
   "peerDependencies": {
     "react": "^16.0.0"
+  },
+  "devDependencies": {
+    "rollup": "^0.65.0"
   }
 }
