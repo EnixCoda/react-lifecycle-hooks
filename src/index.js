@@ -1,6 +1,3 @@
-import React from 'react'
-
-
 const middlewares = []
 
 function applyMiddlewares(componentClass, componentInstance, lifecycleName) {
@@ -9,18 +6,14 @@ function applyMiddlewares(componentClass, componentInstance, lifecycleName) {
   })
 }
 
-export function addMiddleware(middleware) {
-  middlewares.push(middleware)
-}
-
-export function removeMiddleware(middleware) {
-  let index = middlewares.indexOf(middleware)
-  while (index !== -1) {
+function addMiddleware(middleware) {
+  const uniqueMiddleware = middleware.bind(null)
+  middlewares.push(uniqueMiddleware)
+  return function removeMiddleware() {
+    let index = middlewares.indexOf(uniqueMiddleware)
     middlewares.splice(index, 1)
-    index = middlewares.indexOf(middleware)
   }
 }
-
 
 const reactComponentInstanceLifecycles = [
   'componentWillMount',
@@ -74,13 +67,24 @@ function decorate(theComponentClass) {
   return wrapLifecycleMethod(theComponentClass, theComponentClass, 'render')
 }
 
-const { createElement } = React
-React.createElement = function(type) {
-  if (typeof type === 'string') return createElement.apply(this, arguments)
-  const theComponentClass = type
-  if (!decorationMap.has(theComponentClass)) {
-    decorationMap.set(theComponentClass, decorate(theComponentClass))
+function activate(React) {
+  React = React || require('react')
+  const { createElement } = React
+  React.createElement = function(type) {
+    if (typeof type === 'string') return createElement.apply(this, arguments)
+    const theComponentClass = type
+    if (!decorationMap.has(theComponentClass)) {
+      decorationMap.set(theComponentClass, decorate(theComponentClass))
+    }
+    const decorated = decorationMap.get(theComponentClass)
+    return createElement.apply(this, [decorated].concat(Array.prototype.slice.call(arguments, 1)))
   }
-  const decorated = decorationMap.get(theComponentClass)
-  return createElement.apply(this, [decorated].concat(Array.prototype.slice.call(arguments, 1)))
+  return function deactivate() {
+    React.createElement = createElement
+  }
+}
+
+export default {
+  activate,
+  addMiddleware,
 }
