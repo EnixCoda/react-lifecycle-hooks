@@ -1,12 +1,12 @@
 const middlewares = []
 
-function applyMiddlewares(componentClass, componentInstance, lifecycleName) {
+function applyMiddlewares(componentClass, componentInstance, lifecycleName, lifecycleArguments) {
   middlewares.forEach(middleware => {
-    middleware.call(null, componentClass, componentInstance, lifecycleName)
+    middleware.call(null, componentClass, componentInstance, lifecycleName, lifecycleArguments)
   })
 }
 
-function addMiddleware(middleware) {
+export function addMiddleware(middleware) {
   const uniqueMiddleware = middleware.bind(null)
   middlewares.push(uniqueMiddleware)
   return function removeMiddleware() {
@@ -36,7 +36,7 @@ const decorationMap = new Map()
 
 function wrapLifecycleMethod(theComponentClass, method, lifecycleName) {
   return function () {
-    applyMiddlewares(theComponentClass, this, lifecycleName)
+    applyMiddlewares(theComponentClass, this, lifecycleName, arguments)
     return method.apply(this, arguments)
   }
 }
@@ -67,7 +67,7 @@ function decorate(theComponentClass) {
   return wrapLifecycleMethod(theComponentClass, theComponentClass, 'render')
 }
 
-function activate(React) {
+export function activate(React) {
   React = React || require('react')
   const { createElement } = React
   React.createElement = function(type) {
