@@ -14,7 +14,7 @@
   "author": "EnixCoda",
   "license": "MIT",
   "scripts": {
-    "build": "rollup index.js --file lib/index.js --format umd --name \"react-life-hook\""
+    "build": "rollup src/index.js --file lib/index.js --format umd --name \"react-life-hook\""
   },
   "peerDependencies": {
     "react": "^16.0.0"
