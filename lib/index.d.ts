@@ -1,4 +1,14 @@
-import { ReactInstance } from 'react'
+import React, { ReactInstance } from 'react'
+
+interface Options {
+  compat: 'all'|'legacy'|'latest'
+}
+
+interface Deactivate extends Function {}
+
+export function activate(React?: React, options: Options): Deactivate {}
+
+interface RemoveMiddleware extends Function {}
 
 export function addMiddleware(
   middleware: (
@@ -6,6 +16,4 @@ export function addMiddleware(
     componentInstance: ReactInstance | React.StatelessComponent,
     lifeCycleName: React.ComponentLifecycle,
   ) => void
-) {}
-
-export function removeMiddleware(middlewareToRemove: Middleware) {}
+): RemoveMiddleware {}

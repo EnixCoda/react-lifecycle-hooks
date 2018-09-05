@@ -80,21 +80,21 @@ function handleCompat(compat) {
       staticLifecycles = [...statics.common, ...statics.latest]
       return
     case 'all':
-    default:
       instanceLifecycles = [...instance.common, ...instance.legacy, ...instance.latest]
       staticLifecycles = [...statics.common, ...statics.legacy, ...statics.latest]
+      return
+    default:
+      if (compareVersions(theReact.version, '16.3.0') < 0) {
+        handleCompat('legacy')
+      } else {
+        handleCompat('all')
+      }
   }
 }
 
 function applyOptions(options) {
   if (typeof options !== 'object' || options === null) options = {}
   handleCompat(options.compat)
-}
-
-if (compareVersions(theReact.version, '16.3.0') < 0) {
-  handleCompat('legacy')
-} else {
-  handleCompat('all')
 }
 
 function noop() {}
