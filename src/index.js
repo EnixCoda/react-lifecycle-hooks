@@ -20,21 +20,29 @@ export function addMiddleware(middleware) {
   }
 }
 
+function noop() {}
+
 const reactComponentInstanceLifecycles = [
-  'componentWillMount',
-  'componentDidMount',
-  'render',
-  'componentWillReceiveProps',
-  'shouldComponentUpdate',
-  'componentWillUpdate',
-  'componentDidUpdate',
-  'componentWillUnmount',
-  'componentDidCatch',
-  'getSnapshotBeforeUpdate',
+  { name: 'componentWillMount' },
+  { name: 'componentDidMount' },
+  { name: 'render' },
+  { name: 'componentWillReceiveProps' },
+  {
+    name: 'shouldComponentUpdate',
+    default: function() { return true },
+  },
+  { name: 'componentWillUpdate' },
+  { name: 'componentDidUpdate' },
+  { name: 'componentWillUnmount' },
+  { name: 'componentDidCatch' },
+  { name: 'getSnapshotBeforeUpdate' },
 ]
 
 const reactComponentStaticLifecycles = [
-  'getDerivedStateFromProps',
+  {
+    name: 'getDerivedStateFromProps',
+    default: function() { return null },
+  },
 ]
 
 const decorationMap = new Map()
@@ -51,20 +59,23 @@ function decorate(componentClass) {
   if (isComponentClass) {
     class DecoratedClass extends componentClass {}
 
-    reactComponentInstanceLifecycles.forEach(lifecycleName => {
-      if (lifecycleName in componentClass.prototype) {
-        // Overwrite only if the component has implemented the life cycle method
-        const method = componentClass.prototype[lifecycleName]
-        DecoratedClass.prototype[lifecycleName] = wrapLifecycleMethod(componentClass, method, lifecycleName)
-      }
+    reactComponentInstanceLifecycles.forEach(lifecycle => {
+      const method = componentClass.prototype[lifecycle.name]
+      DecoratedClass.prototype[lifecycle.name] = wrapLifecycleMethod(
+        componentClass,
+        typeof method === 'function' ? method : (lifecycle.default || noop),
+        lifecycle.name,
+      )
     })
 
     // Seems somehow redundant to above :(
-    reactComponentStaticLifecycles.forEach(lifecycleName => {
-      if (lifecycleName in componentClass) {
-        const method = componentClass[lifecycleName]
-        DecoratedClass[lifecycleName] = wrapLifecycleMethod(componentClass, method, lifecycleName)
-      }
+    reactComponentStaticLifecycles.forEach(lifecycle => {
+      const method = componentClass[lifecycle.name]
+      DecoratedClass[lifecycle.name] = wrapLifecycleMethod(
+        componentClass,
+        typeof method === 'function' ? method : lifecycle.default,
+        lifecycle.name,
+      )
     })
     return DecoratedClass
   }
