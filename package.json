@@ -22,5 +22,8 @@
   },
   "devDependencies": {
     "rollup": "^0.65.0"
+  },
+  "dependencies": {
+    "compare-versions": "^3.4.0"
   }
 }
