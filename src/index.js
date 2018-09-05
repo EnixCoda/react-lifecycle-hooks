@@ -1,3 +1,8 @@
+let theReact
+try {
+  theReact = require('react')
+} catch(e) {}
+
 const middlewares = []
 
 function applyMiddlewares(componentClass, componentInstance, lifecycleName, lifecycleArguments) {
@@ -34,49 +39,55 @@ const reactComponentStaticLifecycles = [
 
 const decorationMap = new Map()
 
-function wrapLifecycleMethod(theComponentClass, method, lifecycleName) {
+function wrapLifecycleMethod(componentClass, method, lifecycleName) {
   return function () {
-    applyMiddlewares(theComponentClass, this, lifecycleName, arguments)
+    applyMiddlewares(componentClass, this, lifecycleName, arguments)
     return method.apply(this, arguments)
   }
 }
 
-function decorate(theComponentClass) {
-  const isComponentClass = theComponentClass.prototype instanceof React.Component || theComponentClass.prototype instanceof React.PureComponent
+function decorate(componentClass) {
+  const isComponentClass = componentClass.prototype instanceof theReact.Component
   if (isComponentClass) {
-    class DecoratedClass extends theComponentClass {}
+    class DecoratedClass extends componentClass {}
 
     reactComponentInstanceLifecycles.forEach(lifecycleName => {
-      if (lifecycleName in theComponentClass.prototype) {
+      if (lifecycleName in componentClass.prototype) {
         // Overwrite only if the component has implemented the life cycle method
-        const method = theComponentClass.prototype[lifecycleName]
-        DecoratedClass.prototype[lifecycleName] = wrapLifecycleMethod(theComponentClass, method, lifecycleName)
+        const method = componentClass.prototype[lifecycleName]
+        DecoratedClass.prototype[lifecycleName] = wrapLifecycleMethod(componentClass, method, lifecycleName)
       }
     })
 
     // Seems somehow redundant to above :(
     reactComponentStaticLifecycles.forEach(lifecycleName => {
-      if (lifecycleName in theComponentClass) {
-        const method = theComponentClass[lifecycleName]
-        DecoratedClass[lifecycleName] = wrapLifecycleMethod(theComponentClass, method, lifecycleName)
+      if (lifecycleName in componentClass) {
+        const method = componentClass[lifecycleName]
+        DecoratedClass[lifecycleName] = wrapLifecycleMethod(componentClass, method, lifecycleName)
       }
     })
     return DecoratedClass
   }
 
-  return wrapLifecycleMethod(theComponentClass, theComponentClass, 'render')
+  return wrapLifecycleMethod(componentClass, componentClass, 'render')
 }
 
 export function activate(React) {
-  React = React || require('react')
+  if (React) {
+    theReact = React
+  } else if (!theReact) {
+    console.warn('React is not available, activation aborted!')
+    return
+  }
+
   const { createElement } = React
   React.createElement = function(type) {
     if (typeof type === 'string') return createElement.apply(this, arguments)
-    const theComponentClass = type
-    if (!decorationMap.has(theComponentClass)) {
-      decorationMap.set(theComponentClass, decorate(theComponentClass))
+    const componentClass = type
+    if (!decorationMap.has(componentClass)) {
+      decorationMap.set(componentClass, decorate(componentClass))
     }
-    const decorated = decorationMap.get(theComponentClass)
+    const decorated = decorationMap.get(componentClass)
     return createElement.apply(this, [decorated].concat(Array.prototype.slice.call(arguments, 1)))
   }
   return function deactivate() {
