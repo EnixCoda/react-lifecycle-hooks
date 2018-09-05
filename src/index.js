@@ -35,7 +35,10 @@ const reactComponentInstanceLifecycles = [
   { name: 'componentDidUpdate' },
   { name: 'componentWillUnmount' },
   { name: 'componentDidCatch' },
-  { name: 'getSnapshotBeforeUpdate' },
+  {
+    name: 'getSnapshotBeforeUpdate',
+    default: function() { return null },
+  },
 ]
 
 const reactComponentStaticLifecycles = [
