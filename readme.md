@@ -65,6 +65,8 @@ Then every time App renders, you'll see output like this in your console:
 Going to execute render of App on {app instance}.
 ```
 
+Check out [Code Sandbox Demo](https://codesandbox.io/s/vnw3w00qxl) for more detailed usages!
+
 ## Why react-life-hook?
 Most similar tools work as HoC or hijack prototype methods to achieve the same goal. But those have these disadvantages:
 1. Developers have to add HoC decorator to all components.
@@ -83,6 +85,23 @@ But all of its lifecycles will invoke middlewares and the original's correspondi
 Thanks to that, `react-life-hook` will only process those component which are going to render for the first time, and use the cached versions for further use.
 
 Simple but efficient, right?
+
+## Options
+`react-life-hook` can accept options as the second parameter of activate:
+```js
+activate(React, options)
+```
+
+`options` should be an object with following keys:
+
+* compat
+    > short for compatibility, valid values are:
+    >
+    > legacy: for React under `16.3.0`.
+    >
+    > latest: latest React lifecycles, including `getSnapshotBeforeUpdate` and `getDerivedStateFromProps`. But removed `componentWillMount`, `componentWillReceiveProps` and `componentWillUpdate`.
+    >
+    > all: all lifecycles, but you'll get a warning in console.
 
 ## TODO
 - [ ] Better types definitions - current `index.d.ts` might has not been correctly written.
