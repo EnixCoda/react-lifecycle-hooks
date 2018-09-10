@@ -23,6 +23,7 @@ export function addMiddleware(middleware) {
 }
 
 let instanceLifecycles = []
+let instancePureLifecycles = []
 let staticLifecycles = []
 
 const lifecycles = {
@@ -30,15 +31,17 @@ const lifecycles = {
     common: [
       { name: 'componentDidMount' },
       { name: 'render' },
+      { name: 'componentDidUpdate' },
+      { name: 'componentWillUnmount' },
+      { name: 'componentDidCatch' },
+    ],
+    pure: [
       {
         name: 'shouldComponentUpdate',
         default: function shouldComponentUpdate() {
           return true
         },
       },
-      { name: 'componentDidUpdate' },
-      { name: 'componentWillUnmount' },
-      { name: 'componentDidCatch' },
     ],
     legacy: [
       { name: 'componentWillMount' },
@@ -72,15 +75,18 @@ function handleCompat(compat) {
   const { instance, statics } = lifecycles
   switch (compat) {
     case 'legacy':
-      instanceLifecycles = [...instance.common, ...instance.legacy]
+      instancePureLifecycles = [...instance.common, ...instance.legacy]
+      instanceLifecycles = instanceLifecycles.concat(instance.pure)
       staticLifecycles = [...statics.common, ...statics.legacy]
       return
     case 'latest':
-      instanceLifecycles = [...instance.common, ...instance.latest]
+      instancePureLifecycles = [...instance.common, ...instance.latest]
+      instanceLifecycles = instanceLifecycles.concat(instance.pure)
       staticLifecycles = [...statics.common, ...statics.latest]
       return
     case 'all':
-      instanceLifecycles = [...instance.common, ...instance.legacy, ...instance.latest]
+      instancePureLifecycles = [...instance.common, ...instance.legacy, ...instance.latest]
+      instanceLifecycles = instanceLifecycles.concat(instance.pure)
       staticLifecycles = [...statics.common, ...statics.legacy, ...statics.latest]
       return
     default:
@@ -109,11 +115,14 @@ function wrapLifecycleMethod(componentClass, method, lifecycleName) {
 }
 
 function decorate(componentClass) {
-  const isComponentClass = componentClass.prototype instanceof theReact.Component
+  const isPureComponentClass = componentClass.prototype instanceof theReact.PureComponent
+  const isComponentClass = isPureComponentClass || componentClass.prototype instanceof theReact.Component
   if (isComponentClass) {
     class DecoratedClass extends componentClass {}
 
-    instanceLifecycles.forEach(lifecycle => {
+    const lifecyclesForTheClass = isPureComponentClass ? instancePureLifecycles : instanceLifecycles
+
+    lifecyclesForTheClass.forEach(lifecycle => {
       const method = componentClass.prototype[lifecycle.name]
       DecoratedClass.prototype[lifecycle.name] = wrapLifecycleMethod(
         componentClass,
