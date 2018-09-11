@@ -160,7 +160,7 @@ export function activate(React, options) {
 
   const { createElement } = React
   React.createElement = function(type) {
-    if (typeof type === 'string') return createElement.apply(this, arguments)
+    if (typeof type !== 'function') return createElement.apply(this, arguments)
     const componentClass = type
     if (!decorationMap.has(componentClass)) {
       decorationMap.set(componentClass, decorate(componentClass))
