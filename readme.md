@@ -1,13 +1,15 @@
-# React Life Hook
+# React Lifecycle Hooks
 
-Listening to life cycles of your React components is not hard anymore! All you need to get started are:
+> This package was previously named `react-life-hooks`
+
+Listening to lifecycles of your React components is not hard anymore! All you need to get started are:
 1. Install from npm
     ```
-    $ npm i react-life-hook
+    $ npm i react-lifecycle-hooks
     ```
 1. Then add this to somewhere in your codebase
     ```jsx
-    import { activate } from 'react-life-hook'
+    import { activate } from 'react-lifecycle-hooks'
     activate()
     // or
     activate(require('react'))
@@ -16,20 +18,20 @@ Listening to life cycles of your React components is not hard anymore! All you n
 It's also available as default export.
 
 ```jsx
-import reactLifeHook from 'react-life-hook'
-reactLifeHook.activate()
+import reactLifecycleHooks from 'react-lifecycle-hooks'
+reactLifecycleHooks.activate()
 ```
 
 Done, it's ready to serve!
 
 ## Usage Example
-Now `react-life-hook` needs to know what it should do when lifecycles are invoked.
+Now `react-lifecycle-hooks` needs to know what it should do when lifecycles are invoked.
 
 It provides such a method called `addMiddleware`:
 
 ```jsx
 import React from 'react'
-import { activate, addMiddleware } from 'react-life-hook'
+import { activate, addMiddleware } from 'react-lifecycle-hooks'
 
 // Example component class
 class App extends React.Component {
@@ -67,7 +69,7 @@ Going to execute render of App on {app instance}.
 
 Check out [Code Sandbox Demo](https://codesandbox.io/s/vnw3w00qxl) for more detailed usages!
 
-## Why react-life-hook?
+## Why react-lifecycle-hooks?
 Most similar tools work as HoC or hijack prototype methods to achieve the same goal. But those have these disadvantages:
 1. Developers have to add HoC decorator to all components.
     > It would be a disaster if there are lots of components need to be watched.
@@ -82,12 +84,12 @@ The magic happens when your app renders.
 
 It will overwrite `React.createElement`. Within it, it creates a wrapped React component class which has similar behavior just like the original one.
 But all of its lifecycles will invoke middlewares and the original's corresponding lifecycle.
-Thanks to that, `react-life-hook` will only process those component which are going to render for the first time, and use the cached versions for further use.
+Thanks to that, `react-lifecycle-hooks` will only process those component which are going to render for the first time, and use the cached versions for further use.
 
 Simple but efficient, right?
 
 ## Options
-`react-life-hook` can accept options as the second parameter of activate:
+`react-lifecycle-hooks` can accept options as the second parameter of activate:
 ```js
 activate(React, options)
 ```

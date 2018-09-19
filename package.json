@@ -1,5 +1,5 @@
 {
-  "name": "react-life-hook",
+  "name": "react-lifecycle-hooks",
   "version": "0.2.8",
   "keywords": [
     "react",
@@ -8,13 +8,13 @@
     "listen",
     "middleware"
   ],
-  "description": "Add hooks for life cycles of all react components in your app easily.",
+  "description": "Add hooks for lifecycles of all react components in your app easily.",
   "main": "lib/index.js",
-  "repository": "https://github.com/EnixCoda/ReactLifeHook",
+  "repository": "https://github.com/EnixCoda/ReactLifecycleHooks",
   "author": "EnixCoda",
   "license": "MIT",
   "scripts": {
-    "build": "rollup src/index.js --file lib/index.js --format umd --name \"react-life-hook\"",
+    "build": "rollup src/index.js --file lib/index.js --format umd --name \"react-lifecycle-hooks\"",
     "prepublish": "npm run build"
   },
   "peerDependencies": {
