@@ -96,14 +96,10 @@ activate(React, options)
 
 `options` should be an object with following keys:
 
-* compat
-    > short for compatibility, valid values are:
-    >
-    > legacy: for React under `16.3.0`.
-    >
-    > latest: latest React lifecycles, including `getSnapshotBeforeUpdate` and `getDerivedStateFromProps`. But removed `componentWillMount`, `componentWillReceiveProps` and `componentWillUpdate`.
-    >
-    > all: all lifecycles, but you'll get a warning in console.
+* compat - short for compatibility, valid values:
+    * `'legacy'` - for React under `16.3.0`.
+    * `'latest'` - latest React lifecycles, including `getSnapshotBeforeUpdate` and `getDerivedStateFromProps`. But removed `componentWillMount`, `componentWillReceiveProps` and `componentWillUpdate`.
+    * `'all'` - all lifecycles, but you'll get a warning in console.
 
 ## TODO
 - [ ] Better types definitions - current `index.d.ts` might has not been correctly written.
