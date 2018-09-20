@@ -5,7 +5,7 @@
 Listening to lifecycles of your React components is not hard anymore! All you need to get started are:
 1. Install from npm
     ```
-    $ npm i react-lifecycle-hooks
+    $ npm i react-lifecycle-hooks --save
     ```
 1. Then add this to somewhere in your codebase
     ```jsx
