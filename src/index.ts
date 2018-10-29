@@ -1,19 +1,43 @@
 const compareVersions = require('compare-versions')
+import * as React from 'react'
 
-let theReact
+let theReact: typeof React
 try {
   theReact = require('react')
 } catch (e) {}
 
-const middlewares = []
+const middlewares: Middleware[] = []
 
-function applyMiddlewares(componentClass, componentInstance, lifecycleName, lifecycleArguments) {
+type lifecycleName =
+  | 'render'
+  | keyof React.ComponentLifecycle<any, any, any>
+  | keyof React.StaticLifecycle<any, any>
+
+function applyMiddlewares(
+  componentClass: React.ComponentClass,
+  componentInstance: React.ReactInstance,
+  lifecycleName: lifecycleName,
+  lifecycleArguments?: any
+) {
   middlewares.forEach(middleware => {
     middleware.call(null, componentClass, componentInstance, lifecycleName, lifecycleArguments)
   })
 }
 
-export function addMiddleware(middleware) {
+interface Middleware {
+  (
+    componentClass: React.ComponentClass | React.StatelessComponent,
+    componentInstance: React.ReactInstance | React.StatelessComponent,
+    lifeCycleName: lifecycleName,
+    lifecycleArguments?: any
+  ): RemoveMiddleware
+}
+
+interface RemoveMiddleware {
+  (): void
+}
+
+export function addMiddleware(middleware: Middleware) {
   const uniqueMiddleware = middleware.bind(null)
   middlewares.push(uniqueMiddleware)
   return function removeMiddleware() {
@@ -22,11 +46,20 @@ export function addMiddleware(middleware) {
   }
 }
 
-let instanceLifecycles = []
-let instancePureLifecycles = []
-let staticLifecycles = []
+let instanceLifecycles: lifecycleSlot[] = []
+let instancePureLifecycles: lifecycleSlot[] = []
+let staticLifecycles: lifecycleSlot[] = []
 
-const lifecycles = {
+interface lifecycleSlot {
+  name: lifecycleName
+  default?: React.ComponentLifecycle<any, any, any>
+}
+
+const lifecycles: {
+  [key: string]: {
+    [key: string]: lifecycleSlot[]
+  }
+} = {
   instance: {
     common: [
       { name: 'componentDidMount' },
@@ -71,35 +104,44 @@ const lifecycles = {
   },
 }
 
-function handleCompat(compat) {
+enum Compat {
+  legacy = 'legacy',
+  latest = 'latest',
+  all = 'all',
+}
+
+function handleCompat(compat: Compat) {
   const { instance, statics } = lifecycles
   switch (compat) {
-    case 'legacy':
+    case Compat.legacy:
       instancePureLifecycles = [...instance.common, ...instance.legacy]
       instanceLifecycles = instanceLifecycles.concat(instance.pure)
       staticLifecycles = [...statics.common, ...statics.legacy]
       return
-    case 'latest':
+    case Compat.latest:
       instancePureLifecycles = [...instance.common, ...instance.latest]
       instanceLifecycles = instanceLifecycles.concat(instance.pure)
       staticLifecycles = [...statics.common, ...statics.latest]
       return
-    case 'all':
+    case Compat.all:
       instancePureLifecycles = [...instance.common, ...instance.legacy, ...instance.latest]
       instanceLifecycles = instanceLifecycles.concat(instance.pure)
       staticLifecycles = [...statics.common, ...statics.legacy, ...statics.latest]
       return
     default:
       if (compareVersions(theReact.version, '16.3.0') < 0) {
-        handleCompat('legacy')
+        handleCompat(Compat.legacy)
       } else {
-        handleCompat('all')
+        handleCompat(Compat.all)
       }
   }
 }
 
-function applyOptions(options) {
-  if (typeof options !== 'object' || options === null) options = {}
+interface Options {
+  compat: Compat
+}
+
+function applyOptions(options: Options) {
   handleCompat(options.compat)
 }
 
@@ -107,16 +149,21 @@ function noop() {}
 
 const decorationMap = new Map()
 
-function wrapLifecycleMethod(componentClass, method, lifecycleName) {
+function wrapLifecycleMethod(
+  componentClass: React.ComponentClass,
+  method: React.ComponentLifecycle<any, any, any>,
+  lifecycleName: lifecycleName
+) {
   return function() {
     applyMiddlewares(componentClass, this, lifecycleName, arguments)
     return method.apply(this, arguments)
   }
 }
 
-function decorate(componentClass) {
+function decorate(componentClass: React.ComponentClass | React.SFC) {
   const isPureComponentClass = componentClass.prototype instanceof theReact.PureComponent
-  const isComponentClass = isPureComponentClass || componentClass.prototype instanceof theReact.Component
+  const isComponentClass =
+    isPureComponentClass || componentClass.prototype instanceof theReact.Component
   if (isComponentClass) {
     class DecoratedClass extends componentClass {}
 
@@ -146,20 +193,25 @@ function decorate(componentClass) {
   return wrapLifecycleMethod(componentClass, componentClass, 'render')
 }
 
-export function activate(React, options) {
-  if (React) {
-    theReact = React
+export function activate(react: typeof React, options: Options) {
+  if (react) {
+    theReact = react
   } else if (!theReact) {
     console.warn('React is not available, activation aborted!')
     return
   }
 
-  React = theReact
+  react = theReact
 
   applyOptions(options)
 
-  const { createElement } = React
-  React.createElement = function(type) {
+  const { createElement } = react
+  react.createElement = function createElement(
+    type:
+      | string
+      | Function
+      | React.ComponentClass
+  ) {
     if (typeof type !== 'function') return createElement.apply(this, arguments)
     const componentClass = type
     if (!decorationMap.has(componentClass)) {
@@ -169,7 +221,7 @@ export function activate(React, options) {
     return createElement.apply(this, [decorated].concat(Array.prototype.slice.call(arguments, 1)))
   }
   return function deactivate() {
-    React.createElement = createElement
+    react.createElement = createElement
   }
 }
 
