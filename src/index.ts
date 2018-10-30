@@ -42,7 +42,7 @@ export function addMiddleware(middleware: Middleware) {
   middlewares.push(uniqueMiddleware)
   return function removeMiddleware() {
     let index = middlewares.indexOf(uniqueMiddleware)
-    middlewares.splice(index, 1)
+    if (index !== -1) middlewares.splice(index, 1)
   }
 }
 
