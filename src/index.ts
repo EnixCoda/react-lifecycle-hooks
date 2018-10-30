@@ -46,14 +46,14 @@ export function addMiddleware(middleware: Middleware) {
   }
 }
 
-let instanceLifecycles: lifecycleSlot[] = []
-let instancePureLifecycles: lifecycleSlot[] = []
-let staticLifecycles: lifecycleSlot[] = []
-
 interface lifecycleSlot {
   name: lifecycleName
   default?: Function
 }
+
+let instanceLifecycles: lifecycleSlot[] = []
+let instancePureLifecycles: lifecycleSlot[] = []
+let staticLifecycles: lifecycleSlot[] = []
 
 const lifecycles: {
   [key: string]: {
@@ -157,38 +157,35 @@ function wrapLifecycleMethod(
 }
 
 function decorate(componentType: ComponentClass) {
-  const isPureComponentClass = componentType.prototype instanceof theReact.PureComponent
-  const isComponentClass =
-    isPureComponentClass || componentType.prototype instanceof theReact.Component
-  if (isComponentClass) {
-    const componentClass = componentType as React.ComponentClass
-    class DecoratedClass extends componentClass {}
-
-    const lifecyclesForTheClass = isPureComponentClass ? instancePureLifecycles : instanceLifecycles
-
-    lifecyclesForTheClass.forEach(lifecycle => {
-      const method = componentClass.prototype[lifecycle.name] as Function | undefined
-      ;(DecoratedClass.prototype as any)[lifecycle.name] = wrapLifecycleMethod(
-        componentClass,
-        typeof method === 'function' ? method : lifecycle.default || noop,
-        lifecycle.name
-      )
-    })
-
-    // Seems somehow redundant to above :(
-    staticLifecycles.forEach(lifecycle => {
-      const method = (componentClass as any)[lifecycle.name] as Function
-      ;(DecoratedClass as any)[lifecycle.name] = wrapLifecycleMethod(
-        componentClass,
-        typeof method === 'function' ? method : lifecycle.default,
-        lifecycle.name
-      )
-    })
-    return DecoratedClass
+  if (componentType.constructor === Function) {
+    const render = componentType as React.SFC
+    return wrapLifecycleMethod(componentType, render, 'render')
   }
+  const componentClass = componentType as React.ComponentClass
+  class DecoratedClass extends componentClass {}
 
-  const render = componentType as React.SFC
-  return wrapLifecycleMethod(componentType, render, 'render')
+  const isPureComponentClass = componentType.prototype instanceof theReact.PureComponent
+  const lifecyclesForTheClass = isPureComponentClass ? instancePureLifecycles : instanceLifecycles
+
+  lifecyclesForTheClass.forEach(lifecycle => {
+    const method = componentClass.prototype[lifecycle.name] as Function | undefined
+    ;(DecoratedClass.prototype as any)[lifecycle.name] = wrapLifecycleMethod(
+      componentClass,
+      typeof method === 'function' ? method : lifecycle.default || noop,
+      lifecycle.name
+    )
+  })
+
+  // Seems somehow redundant to above :(
+  staticLifecycles.forEach(lifecycle => {
+    const method = (componentClass as any)[lifecycle.name] as Function | undefined
+    ;(DecoratedClass as any)[lifecycle.name] = wrapLifecycleMethod(
+      componentClass,
+      typeof method === 'function' ? method : lifecycle.default,
+      lifecycle.name
+    )
+  })
+  return DecoratedClass
 }
 
 interface Deactivate extends Function {}
