@@ -3,14 +3,15 @@
     "src"
   ],
   "compilerOptions": {
-    "noImplicitAny": true,
     "target": "es5",
     "lib": [
       "es2015"
     ],
+    "jsx": "react",
     "rootDir": "src",
     "outDir": "lib",
     "moduleResolution": "node",
-    "declaration": true
+    "declaration": true,
+    // "sourceMap": true
   }
 }

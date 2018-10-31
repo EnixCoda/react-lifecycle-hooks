@@ -32,12 +32,12 @@ interface Middleware {
     componentInstance: React.ReactInstance | React.StatelessComponent,
     lifeCycleName: lifecycleName,
     lifecycleArguments?: any
-  ): RemoveMiddleware
+  ): void
 }
 
 interface RemoveMiddleware extends Function {}
 
-export function addMiddleware(middleware: Middleware) {
+export function addMiddleware(middleware: Middleware): RemoveMiddleware {
   const uniqueMiddleware = middleware.bind(null)
   middlewares.push(uniqueMiddleware)
   return function removeMiddleware() {
@@ -128,13 +128,14 @@ function handleCompat(compat: Compat) {
       if (compareVersions(theReact.version, '16.3.0') < 0) {
         handleCompat('legacy')
       } else {
-        handleCompat('all')
+        handleCompat('latest')
       }
   }
 }
 
 interface Options {
-  compat: Compat
+  compat?: Compat
+  React?: typeof React
 }
 
 function applyOptions(options: Options) {
@@ -157,12 +158,14 @@ function wrapLifecycleMethod(
 }
 
 function decorate(componentType: ComponentClass) {
-  if (componentType.constructor === Function) {
+  if (!(componentType.prototype instanceof React.Component)) {
     const render = componentType as React.SFC
     return wrapLifecycleMethod(componentType, render, 'render')
   }
   const componentClass = componentType as React.ComponentClass
-  class DecoratedClass extends componentClass {}
+  class DecoratedClass extends componentClass {
+    static displayName = componentClass.displayName || componentClass.name
+  }
 
   const isPureComponentClass = componentType.prototype instanceof theReact.PureComponent
   const lifecyclesForTheClass = isPureComponentClass ? instancePureLifecycles : instanceLifecycles
@@ -190,30 +193,22 @@ function decorate(componentType: ComponentClass) {
 
 interface Deactivate extends Function {}
 
-// export function activate(react?: typeof React, options?: Options): Deactivate
-// export function activate(options?: Options): Deactivate
-
-export function activate(react?: typeof React, options?: Options): Deactivate {
-  // // allow activate(options)
-  // if (typeof react === 'object' && !options) return activate(undefined, options)
-  // else
-  if (react) {
-    // activate(React) | activate(React, options)
-    theReact = react
+export function activate(options: Options = {}): Deactivate {
+  if (options && options.React) {
+    theReact = options.React
   } else {
-    // activate()
     if (!theReact) {
       console.warn('React is not available, activation aborted!')
       return
     }
   }
 
-  react = theReact
+  const react = theReact
 
   applyOptions(options)
 
   const { createElement } = react
-  react.createElement = function createElement(type: string | ComponentClass) {
+  react.createElement = function _createElement(type: string | ComponentClass) {
     if (typeof type !== 'function') return createElement.apply(this, arguments)
     const componentClass = type
     if (!decorationMap.has(componentClass)) {
