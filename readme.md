@@ -1,62 +1,56 @@
 # React Lifecycle Hooks
 
-> This package was previously named `react-life-hooks`
+Listening to **ALL** your React components in a neat and simple way.
 
-Listening to lifecycles of your React components is not hard anymore! All you need to get started are:
+2 steps to get started:
 1. Install from npm
     ```
-    $ npm i react-lifecycle-hooks --save
+    $ npm i react-lifecycle-hooks --save-dev
     ```
 1. Then add this to somewhere in your codebase
     ```jsx
     import { activate } from 'react-lifecycle-hooks'
     activate()
-    // or
-    activate(require('react'))
     ```
 
-It's also available as default export.
+## Usage
+Now `react-lifecycle-hooks` is ready to serve, it is watching every lifecycle among all components in your app. You can tell it what to do when lifecycles are invoked.
 
-```jsx
-import reactLifecycleHooks from 'react-lifecycle-hooks'
-reactLifecycleHooks.activate()
-```
-
-Done, it's ready to serve!
-
-## Usage Example
-Now `react-lifecycle-hooks` needs to know what it should do when lifecycles are invoked.
-
-It provides such a method called `addMiddleware`:
+Besides `activate`, it also provides method `addMiddleware`:
 
 ```jsx
 import React from 'react'
 import { activate, addMiddleware } from 'react-lifecycle-hooks'
 
-// Example component class
+// Example component
 class App extends React.Component {
   render() {
     return 'Hello, World!'
   }
 }
 
+// Example middleware
+function logEverything(
+    componentClass,
+    componentInstance,
+    lifecycleName,
+    lifecycleArguments,
+) {
+  console.log('Going to execute', lifecycleName, 'of', componentClass.name, 'on instance', componentInstance, 'with arguments', lifecycleArguments)
+}
+
 /*
-Middlewares accept these arguments:
+A typical middleware should accept these arguments:
     componentClass, componentInstance, lifecycleName and lifecycleArguments.
 
 It should be obvious from their names that
     `componentInstance` is an instance of `componentClass`,
     `lifecycleName` is the name of the lifecycle going to be invoked,
-    `lifecycleArguments` is the exact arguments (the Array-like one) will be passed to the lifecycle.
+    `lifecycleArguments` is the arguments  will be passed to the lifecycle.
 */
 
-// Example middleware
-function simplyLog(componentClass, componentInstance, lifecycleName, lifecycleArguments) {
-  console.log('Going to execute', lifecycleName, 'of', componentClass.name, 'on', componentInstance)
-}
-
-const removeSimplyLogMiddleware = addMiddleware(simplyLog)
-// removeSimplyLogMiddleware() will remove simplyLog from middlewares
+const removeLogMiddleware = addMiddleware(logEverything)
+// removeLogMiddleware() will remove logEverything from middlewares
 
 const deactivate = activate()
 // Use deactivate() to undo activate
@@ -64,44 +58,35 @@ const deactivate = activate()
 
 Then every time App renders, you'll see output like this in your console:
 ```
-Going to execute render of App on {app instance}.
+Going to execute render of App on instance {app instance} with arguments [].
 ```
 
 Check out [Code Sandbox Demo](https://codesandbox.io/s/vnw3w00qxl) for more detailed usages!
 
-## Why react-lifecycle-hooks?
-Most similar tools work as HoC or hijack prototype methods to achieve the same goal. But those have these disadvantages:
-1. Developers have to add HoC decorator to all components.
-    > It would be a disaster if there are lots of components need to be watched.
-1. Due to `1.`, code of components will be polluted.
-    > In most cases, those tools are supposed to work only when developing. Modifying a lot of component code for global needs is not a good idea.
-    >
-    > BTW, Reverting those changes before submitting code would be another disaster.
-1. If hijack prototype lifecycle methods, it will fail on components who have custom lifecycle method declared.
-
-## How does this work?
-The magic happens when your app renders.
-
-It will overwrite `React.createElement`. Within it, it creates a wrapped React component class which has similar behavior just like the original one.
-But all of its lifecycles will invoke middlewares and the original's corresponding lifecycle.
-Thanks to that, `react-lifecycle-hooks` will only process those component which are going to render for the first time, and use the cached versions for further use.
-
-Simple but efficient, right?
+## Why react-lifecycle-hooks instead of others?
+Most similar tools work as HoC or hijack `React.Component` prototype methods to achieve the similar goal. But they have disadvantages:
+1. Developers have to add HoC decorator to each components.
+    > It would be a disaster if there are lots of components.
+1. Due to `1.`, components code have be polluted.
+    > In most cases, these changes are supposed to be included only when developing. Modifying lots of component code for global needs is not a good idea.
+1. If hijack prototype lifecycle methods, it will not work for components who have custom lifecycle method declared.
 
 ## Options
-`react-lifecycle-hooks` can accept options as the second parameter of activate:
+`react-lifecycle-hooks` accepts an optional argument when activating:
 ```js
-activate(React, options)
+activate({ React, compat })
 ```
 
-`options` should be an object with following keys:
+`options` works with these optional keys:
 
-* compat - short for compatibility, valid values:
-    * `'legacy'` - for React under `16.3.0`.
-    * `'latest'` - latest React lifecycles, including `getSnapshotBeforeUpdate` and `getDerivedStateFromProps`. But removed `componentWillMount`, `componentWillReceiveProps` and `componentWillUpdate`.
-    * `'all'` - all lifecycles, but you'll get a warning in console.
+* compat - React team has announced lifecycle changes since 16.3, that's the reason of having this option. It is in short for compatibility, valid values:
+    * `'legacy'` - for React < `v16.3.0`
+    * `'latest'` - for React >= `v16.3.0`
+    * `'all'` - all lifecycles, but you'll might get warnings in console.
+    * if omitted, `react-lifecycle-hooks` will decide automatically!
 
-## TODO
-- [ ] Better types definitions - current `index.d.ts` might has not been correctly written.
-- [ ] Provide some preset middlewares - I believe there are some common cases.
-- [ ] Add tests.
+* React - Explicitly pass React or react-like lib in, for example:
+
+    ```js
+    activate({ React: require('react') })
+    ```
