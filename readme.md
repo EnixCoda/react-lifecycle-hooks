@@ -37,23 +37,13 @@ import App from './path/to/app'
 
 // Example middleware
 function logEverything(
-    componentClass,
-    componentInstance,
-    lifecycleName,
-    lifecycleArguments,
+    componentClass,     // component class
+    componentInstance,  // instance of `componentClass`
+    lifecycleName,      // name of the lifecycle going to be invoked
+    lifecycleArguments, // arguments will be passed to the lifecycle
 ) {
   console.log('Going to execute', lifecycleName, 'of', componentClass.name, 'on instance', componentInstance, 'with arguments', lifecycleArguments)
 }
-
-/*
-A typical middleware should accept these arguments:
-    componentClass, componentInstance, lifecycleName and lifecycleArguments.
-
-It should be obvious from their names that
-    `componentInstance` is an instance of `componentClass`,
-    `lifecycleName` is the name of the lifecycle going to be invoked,
-    `lifecycleArguments` is the arguments  will be passed to the lifecycle.
-*/
 
 const removeLogMiddleware = addMiddleware(logEverything)
 // removeLogMiddleware() will remove logEverything from middlewares
