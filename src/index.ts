@@ -208,7 +208,7 @@ export function activate(options: Options = {}): Deactivate {
   applyOptions(options)
 
   const { createElement } = react
-  react.createElement = function _createElement(type: string | ComponentClass) {
+  function _createElement(type: string | ComponentClass) {
     if (typeof type !== 'function') return createElement.apply(this, arguments)
     const componentClass = type
     if (!decorationMap.has(componentClass)) {
@@ -217,8 +217,11 @@ export function activate(options: Options = {}): Deactivate {
     const decorated = decorationMap.get(componentClass)
     return createElement.apply(this, [decorated].concat(Array.prototype.slice.call(arguments, 1)))
   }
+  react.createElement = _createElement
   return function deactivate() {
-    react.createElement = createElement
+    if (react.createElement === _createElement) {
+      react.createElement = createElement
+    }
   }
 }
 
