@@ -19,15 +19,21 @@ Now `react-lifecycle-hooks` is ready to serve, it is watching every lifecycle am
 Besides `activate`, it also provides method `addMiddleware`:
 
 ```jsx
-import React from 'react'
-import { activate, addMiddleware } from 'react-lifecycle-hooks'
-
-// Example component
+// #app.jsx
+// Assume such component is in somewhere of your project
 class App extends React.Component {
   render() {
     return 'Hello, World!'
   }
 }
+```
+
+```jsx
+// #use-lifecycle-hooks.js
+// You can create such a new file, then you can plug/unplug this easily
+import React from 'react'
+import { activate, addMiddleware } from 'react-lifecycle-hooks'
+import App from './path/to/app'
 
 // Example middleware
 function logEverything(
@@ -61,7 +67,7 @@ Then every time App renders, you'll see output like this in your console:
 Going to execute render of App on instance {app instance} with arguments [].
 ```
 
-Check out [Code Sandbox Demo](https://codesandbox.io/s/vnw3w00qxl) for more detailed usages!
+Check out [Code Sandbox Demo](https://codesandbox.io/s/vq0y5mpo47) for more detailed usages!
 
 ## Why react-lifecycle-hooks instead of others?
 Most similar tools work as HoC or hijack `React.Component` prototype methods to achieve the similar goal. But they have disadvantages:
