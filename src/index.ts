@@ -160,7 +160,9 @@ function wrapLifecycleMethod(
 function decorate(componentType: ComponentClass) {
   if (!(componentType.prototype instanceof React.Component)) {
     const render = componentType as React.SFC
-    return wrapLifecycleMethod(componentType, render, 'render')
+    const decorated = wrapLifecycleMethod(componentType, render, 'render') as React.SFC
+    decorated.displayName = componentType.displayName || componentType.name
+    return decorated
   }
   const componentClass = componentType as React.ComponentClass
   class DecoratedClass extends componentClass {
