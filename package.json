@@ -9,5 +9,6 @@
   },
   "workspaces": [
     "react-lifecycle-hooks",
+    "test/*"
   ]
 }

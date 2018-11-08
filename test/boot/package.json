@@ -1,0 +1,13 @@
+{
+  "name": "boot",
+  "version": "1.0.0",
+  "main": "dist/index.js",
+  "license": "MIT",
+  "scripts": {
+    "build": "tsc"
+  },
+  "devDependencies": {
+    "typescript": "^3.1.6",
+    "ts-node": "^7.0.1"
+  }
+}
