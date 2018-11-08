@@ -12,6 +12,6 @@
     "outDir": "lib",
     "moduleResolution": "node",
     "declaration": true,
-    // "sourceMap": true
+    "sourceMap": true
   }
 }
