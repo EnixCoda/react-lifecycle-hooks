@@ -46,6 +46,28 @@ export function addMiddleware(middleware: Middleware): RemoveMiddleware {
   }
 }
 
+function wrapLifecycleMethodForAfterV16(
+  componentClass: ComponentClass,
+  method: Function,
+  lifecycleName: lifecycleName
+) {
+  return function(...args: any[]) {
+    applyMiddlewares(componentClass, this, lifecycleName, args)
+    return method.apply(this, arguments)
+  }
+}
+
+function wrapLifecycleMethodForBeforeV16(
+  componentClass: ComponentClass,
+  method: Function,
+  lifecycleName: lifecycleName
+) {
+  return function(...args: any[]) {
+    applyMiddlewares(componentClass, this, lifecycleName, args)
+    return method.apply(this, arguments)
+  }
+}
+
 interface lifecycleSlot {
   name: lifecycleName
   default?: Function
@@ -54,6 +76,7 @@ interface lifecycleSlot {
 let instanceLifecycles: lifecycleSlot[] = []
 let instancePureLifecycles: lifecycleSlot[] = []
 let staticLifecycles: lifecycleSlot[] = []
+let wrapLifecycleMethod: Function
 
 const lifecycles: {
   [key: string]: {
@@ -104,28 +127,39 @@ const lifecycles: {
   },
 }
 
-type Compat = 'legacy' | 'latest' | 'all'
+type Compat = 'ancient' | 'legacy' | 'latest' | 'all'
 
 function handleCompat(compat: Compat) {
   const { instance, statics } = lifecycles
   switch (compat) {
+    case 'ancient':
+      instancePureLifecycles = [...instance.common, ...instance.legacy]
+      instanceLifecycles = [...instancePureLifecycles, ...instance.pure]
+      staticLifecycles = [...statics.common, ...statics.legacy]
+      wrapLifecycleMethod = wrapLifecycleMethodForBeforeV16
+      return
     case 'legacy':
       instancePureLifecycles = [...instance.common, ...instance.legacy]
       instanceLifecycles = [...instancePureLifecycles, ...instance.pure]
       staticLifecycles = [...statics.common, ...statics.legacy]
+      wrapLifecycleMethod = wrapLifecycleMethodForAfterV16
       return
     case 'latest':
       instancePureLifecycles = [...instance.common, ...instance.latest]
       instanceLifecycles = [...instancePureLifecycles, ...instance.pure]
       staticLifecycles = [...statics.common, ...statics.latest]
+      wrapLifecycleMethod = wrapLifecycleMethodForAfterV16
       return
     case 'all':
       instancePureLifecycles = [...instance.common, ...instance.legacy, ...instance.latest]
       instanceLifecycles = [...instancePureLifecycles, ...instance.pure]
       staticLifecycles = [...statics.common, ...statics.legacy, ...statics.latest]
+      wrapLifecycleMethod = wrapLifecycleMethodForAfterV16
       return
     default:
-      if (compareVersions(theReact.version, '16.3.0') < 0) {
+      if (compareVersions(theReact.version, '16.0.0') < 0) {
+        handleCompat('ancient')
+      } else if (compareVersions(theReact.version, '16.3.0') < 0) {
         handleCompat('legacy')
       } else {
         handleCompat('latest')
@@ -146,19 +180,8 @@ function noop() {}
 
 const decorationMap = new Map()
 
-function wrapLifecycleMethod(
-  componentClass: ComponentClass,
-  method: Function,
-  lifecycleName: lifecycleName
-) {
-  return function(...args: any[]) {
-    applyMiddlewares(componentClass, this, lifecycleName, args)
-    return method.apply(this, arguments)
-  }
-}
-
 function decorate(componentType: ComponentClass) {
-  if (!(componentType.prototype instanceof theReact.Component)) {
+  if (!(componentType.prototype instanceof theReact.Component) && !(componentType as any).isReactTopLevelWrapper) {
     const render = componentType as React.SFC
     const decorated = wrapLifecycleMethod(componentType, render, 'render') as React.SFC
     decorated.displayName = componentType.displayName || componentType.name
