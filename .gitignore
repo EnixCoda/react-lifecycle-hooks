@@ -3,3 +3,4 @@ node_modules
 lib
 dist
 .DS_Store
+react-lifecycle-hooks/readme.md
