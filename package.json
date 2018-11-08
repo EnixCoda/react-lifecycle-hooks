@@ -6,6 +6,9 @@
   "license": "MIT",
   "private": true,
   "scripts": {
+    "test": "yarn test-latest && yarn test-ancient",
+    "test-latest": "yarn workspace test-react-lifecycle-hooks-latest test",
+    "test-ancient": "yarn workspace test-react-lifecycle-hooks-ancient test"
   },
   "workspaces": [
     "react-lifecycle-hooks",

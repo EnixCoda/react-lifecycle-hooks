@@ -7,12 +7,14 @@
     {
       "type": "node",
       "request": "launch",
-      "name": "Launch Program",
-      "args": ["${workspaceRoot}/test/index.tsx"],
-      "runtimeArgs": ["--nolazy", "-r", "ts-node/register"],
-      "sourceMaps": true,
-      "cwd": "${workspaceRoot}",
-      "protocol": "inspector",
-    }
+      "name": "Test Latest",
+      "program": "${workspaceFolder}/test/latest/index"
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Test Ancient",
+      "program": "${workspaceFolder}/test/ancient/index"
+    },
   ]
 }

@@ -1,0 +1,13 @@
+{
+  "name": "test-react-lifecycle-hooks-ancient",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "scripts": {
+    "test": "node index.js"
+  },
+  "dependencies": {
+    "react": "15",
+    "react-test-renderer": "15"
+  }
+}
