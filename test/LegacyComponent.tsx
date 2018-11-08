@@ -1,13 +1,13 @@
 import * as React from 'react'
 
-function Cont({children}) {
+function Container({children}) {
   return <div>{children}</div>
 }
 
 export class LegacyComponent extends React.Component {
   componentDidMount() { }
   render() {
-    return <Cont>`legacy`</Cont>
+    return <Container>{this.props.children || `legacy`}</Container>
   }
   componentDidUpdate() { }
   componentWillUnmount() { }
