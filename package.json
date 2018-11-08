@@ -17,6 +17,9 @@
     "build": "tsc && rollup lib/index.js --file lib/index.js --format umd --name \"react-lifecycle-hooks\"",
     "prepublish": "npm run build"
   },
+  "files": [
+    "lib"
+  ],
   "devDependencies": {
     "@types/react": "^16.4.18",
     "@types/react-test-renderer": "^16.0.3",
