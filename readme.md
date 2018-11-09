@@ -42,7 +42,7 @@ function logEverything(
     lifecycleName,      // name of the lifecycle going to be invoked
     lifecycleArguments, // arguments will be passed to the lifecycle
 ) {
-  console.log('Going to execute', lifecycleName, 'of', componentClass.name, 'on instance', componentInstance, 'with arguments', lifecycleArguments)
+  console.log('Going to execute', lifecycleName, 'of', componentClass.displayName || componentClass.name, 'on instance', componentInstance, 'with arguments', lifecycleArguments)
 }
 
 const removeLogMiddleware = addMiddleware(logEverything)
