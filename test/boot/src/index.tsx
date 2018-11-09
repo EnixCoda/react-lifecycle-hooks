@@ -13,7 +13,6 @@ export const test = (React: typeof _React, ReactTestRenderer) => {
   activate({ compat: 'all' })()
   activate({ compat: 'latest' })()
   activate({ compat: 'legacy' })()
-  activate({ compat: 'ancient' })()
 
   // testing activate/deactivate & add/remove middlewares
   let shouldInvoke = false
