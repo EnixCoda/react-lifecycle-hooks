@@ -4,6 +4,7 @@
   "main": "dist/index.js",
   "license": "MIT",
   "scripts": {
+    "prepublish": "npm run build",
     "build": "tsc"
   },
   "devDependencies": {
