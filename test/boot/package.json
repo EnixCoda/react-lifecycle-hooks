@@ -1,5 +1,5 @@
 {
-  "name": "boot",
+  "name": "test-react-lifecycle-hooks-boot",
   "version": "1.0.0",
   "main": "dist/index.js",
   "license": "MIT",

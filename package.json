@@ -6,9 +6,12 @@
   "license": "MIT",
   "private": true,
   "scripts": {
-    "test": "yarn test-latest && yarn test-ancient",
-    "test-latest": "yarn workspace test-react-lifecycle-hooks-latest test",
-    "test-ancient": "yarn workspace test-react-lifecycle-hooks-ancient test"
+    "test": "yarn build:test-boot && yarn test:latest && yarn test:ancient",
+    "pretest": "yarn build && yarn build:test-boot",
+    "build": "yarn workspace react-lifecycle-hooks build",
+    "build:test-boot": "yarn workspace test-react-lifecycle-hooks-boot build",
+    "test:latest": "yarn workspace test-react-lifecycle-hooks-latest test",
+    "test:ancient": "yarn workspace test-react-lifecycle-hooks-ancient test"
   },
   "workspaces": [
     "react-lifecycle-hooks",
