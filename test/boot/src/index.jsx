@@ -1,9 +1,8 @@
-import { activate, addMiddleware } from '../../../react-lifecycle-hooks'
-import { createLegacyComponent } from './LegacyComponent'
-import { createSFC } from './SFC'
-import * as _React from 'react'
+import { activate, addMiddleware } from 'react-lifecycle-hooks'
+import { createLegacyComponent } from './LegacyComponent.jsx'
+import { createSFC } from './SFC.jsx'
 
-export const test = (React: typeof _React, ReactTestRenderer) => {
+export const test = (React, ReactTestRenderer) => {
   const LegacyComponent = createLegacyComponent(React)
   const SFC = createSFC(React)
 
