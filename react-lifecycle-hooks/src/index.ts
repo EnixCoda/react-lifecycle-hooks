@@ -20,11 +20,14 @@ function applyMiddlewares(
   componentInstance: React.ReactInstance,
   lifecycleName: lifecycleName,
   lifecycleArguments: any[],
+  returnAs: (task: Task) => void
 ) {
   middlewares.forEach(middleware => {
-    middleware(componentClass, componentInstance, lifecycleName, lifecycleArguments)
+    middleware(componentClass, componentInstance, lifecycleName, lifecycleArguments, returnAs)
   })
 }
+
+type Task = (returnValue: any) => any
 
 interface Middleware {
   (
@@ -32,6 +35,7 @@ interface Middleware {
     componentInstance: React.ReactInstance | React.StatelessComponent,
     lifeCycleName: lifecycleName,
     lifecycleArguments: any[],
+    returnAs: (task: Task) => void
   ): void
 }
 
@@ -52,8 +56,13 @@ function wrapLifecycleMethod(
   lifecycleName: lifecycleName
 ) {
   return function(...args: any[]) {
-    applyMiddlewares(componentClass, this, lifecycleName, args)
-    return method.apply(this, arguments)
+    const tasks: Task[] = []
+    const returnAs = (task: Task) => {
+      tasks.push(task)
+    }
+    applyMiddlewares(componentClass, this, lifecycleName, args, returnAs)
+    const returnValue = method.apply(this, args)
+    return tasks.reduce((prevReturn, task) => task(prevReturn), returnValue)
   }
 }
 
