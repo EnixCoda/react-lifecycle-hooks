@@ -53,8 +53,13 @@ function wrapLifecycleMethod(
 ) {
   return function(...lifecycleArguments: any[]) {
     const componentInstance = this
+    let shouldNotAddTaskAnymore = false
     const tasks: Task[] = []
     const returnAs = (task: Task) => {
+      if (shouldNotAddTaskAnymore) {
+        console.warn('Please do not call returnAs in returnAs, aborting...')
+        return
+      }
       tasks.push(task)
     }
     applyMiddlewares({
@@ -65,6 +70,7 @@ function wrapLifecycleMethod(
       returnAs,
     })
     const returnValue = method.apply(componentInstance, lifecycleArguments)
+    shouldNotAddTaskAnymore = true
     return tasks.reduce((prevReturn, task) => task(prevReturn), returnValue)
   }
 }
