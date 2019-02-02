@@ -2,50 +2,43 @@
 
 Listening to **ALL** your React components in a neat and simple way.
 
-2 steps to get started:
+To start up:
 1. Install from npm
     ```
     $ npm i react-lifecycle-hooks --save-dev
     ```
-1. Then add this to somewhere in your codebase
+1. Use in single file, but influence whole app!
     ```jsx
     import { activate } from 'react-lifecycle-hooks'
     activate()
     ```
 
 ## Usage
-Now `react-lifecycle-hooks` is ready to serve, it is watching every lifecycle among all components in your app. You can tell it what to do when lifecycles are invoked.
+After above steps, `react-lifecycle-hooks` is ready to serve. It is watching every lifecycle among all components in your app. You can tell it what to do when lifecycles are invoked and even change the original behaviors!
 
-Besides `activate`, it also provides method `addMiddleware`:
-
-```jsx
-// #app.jsx
-// Assume such component is in somewhere of your project
-class App extends React.Component {
-  render() {
-    return 'Hello, World!'
-  }
-}
-```
+Besides `activate`, it provides another method `addMiddleware`.
 
 ```jsx
 // #use-lifecycle-hooks.js
 // You can create such a new file, then you can plug/unplug this easily
+// Just don't forget to import this file :)
 import React from 'react'
 import { activate, addMiddleware } from 'react-lifecycle-hooks'
-import App from './path/to/app'
 
-// Example middleware
+// You'll see basic usages with example middleware
+// you can tell that it logs every happening in your app from its name.
 function logEverything({
-    componentClass,     // component class
-    componentInstance,  // instance of `componentClass`
-    lifecycleName,      // name of the lifecycle going to be invoked
-    lifecycleArguments, // arguments will be passed to the lifecycle
-    returnAs,           // pass functions that accept & overwrite return value
+  // A middleware is a function accepts single argument, which has 5 properties.
+  componentClass,     // component's class
+  componentInstance,  // current instance of `componentClass`
+  lifecycleName,      // name of the lifecycle going to be invoked
+  lifecycleArguments, // arguments will be passed to the lifecycle
+  returnAs,           // pass functions that accept & overwrite return value
 }) {
   console.log('Going to execute', lifecycleName, 'of', componentClass.displayName || componentClass.name, 'on instance', componentInstance, 'with arguments', lifecycleArguments)
 }
 
+// Do you believe, this single middleware can turn every component class into React.PureComponent?
 function forcePureComponent({
   lifecycleName,
   lifecycleInstance,
@@ -73,24 +66,26 @@ function forcePureComponent({
 const removeLogMiddleware = addMiddleware(logEverything)
 // removeLogMiddleware() will remove logEverything from middlewares
 
+// All components works like pure components now!
+addMiddleware(forcePureComponent)
+
 const deactivate = activate()
 // Use deactivate() to undo activate
 ```
 
-Then every time App renders, you'll see output like this in your console:
+Assume such a component is in your project.
+```jsx
+//#my-component.jsx
+function MyComponent(props) {
+    return <span>Hello, World!</span>
+}
 ```
-Going to execute render of App on instance {app instance} with arguments [].
+Then every time it renders, you'll see output like this from console:
+```
+  Going to execute render of MyComponent on instance {the instance} with arguments {props}.
 ```
 
 Check out [Code Sandbox Demo](https://codesandbox.io/s/vq0y5mpo47) for more detailed usages!
-
-## Why react-lifecycle-hooks instead of others?
-Most similar tools work as HoC or hijack `React.Component` prototype methods to achieve the similar goal. But they have disadvantages:
-1. Developers have to add HoC decorator to each components.
-    > It would be a disaster if there are lots of components.
-1. Due to `1.`, components code have be polluted.
-    > In most cases, these changes are supposed to be included only when developing. Modifying lots of component code for global needs is not a good idea.
-1. If hijack prototype lifecycle methods, it will not work for components who have custom lifecycle method declared.
 
 ## Options
 `react-lifecycle-hooks` accepts an optional argument when activating:
@@ -111,3 +106,11 @@ activate({ React, compat })
     ```js
     activate({ React: require('react') })
     ```
+
+## Why react-lifecycle-hooks instead of others?
+Most similar tools work as HoC or hijack `React.Component` prototype methods to achieve the similar goal. But they have disadvantages:
+1. Developers have to add HoC decorator to each components.
+    > It would be a disaster if there are lots of components.
+1. Due to `1.`, components code have be polluted.
+    > In most cases, these changes are supposed to be included only when developing. Modifying lots of component code for global needs is not a good idea.
+1. If hijack prototype lifecycle methods, it will not work for components who have custom lifecycle method declared.
