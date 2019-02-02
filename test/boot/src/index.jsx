@@ -15,7 +15,7 @@ export const test = (React, ReactTestRenderer) => {
 
   // testing activate/deactivate & add/remove middlewares
   let shouldInvoke = false
-  const middleware = (componentClass, instance, lifecycleName, args) => {
+  const middleware = ({ componentClass, lifecycleName }) => {
     if (shouldInvoke) {
       console.log(componentClass.displayName || componentClass.name, lifecycleName)
     } else {
