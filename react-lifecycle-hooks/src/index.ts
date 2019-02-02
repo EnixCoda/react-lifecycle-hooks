@@ -1,4 +1,4 @@
-const compareVersions = require('compare-versions')
+import compareVersions = require('compare-versions')
 import * as React from 'react'
 
 let theReact: typeof React
