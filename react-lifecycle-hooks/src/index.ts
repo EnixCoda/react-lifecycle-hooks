@@ -15,28 +15,24 @@ type lifecycleName =
 
 type ComponentClass = React.ComponentClass | React.SFC
 
-function applyMiddlewares(
-  componentClass: ComponentClass,
-  componentInstance: React.ReactInstance,
-  lifecycleName: lifecycleName,
-  lifecycleArguments: any[],
-  returnAs: (task: Task) => void
-) {
+function applyMiddlewares(heartbeat: HeartBeat) {
   middlewares.forEach(middleware => {
-    middleware(componentClass, componentInstance, lifecycleName, lifecycleArguments, returnAs)
+    middleware(heartbeat)
   })
 }
 
 type Task = (returnValue: any) => any
 
+interface HeartBeat {
+  componentClass: ComponentClass
+  componentInstance: React.ReactInstance | React.StatelessComponent
+  lifecycleName: lifecycleName
+  lifecycleArguments: any[]
+  returnAs: (task: Task) => void
+}
+
 interface Middleware {
-  (
-    componentClass: ComponentClass,
-    componentInstance: React.ReactInstance | React.StatelessComponent,
-    lifeCycleName: lifecycleName,
-    lifecycleArguments: any[],
-    returnAs: (task: Task) => void
-  ): void
+  (heartbeat: HeartBeat): void
 }
 
 interface RemoveMiddleware extends Function {}
@@ -55,13 +51,20 @@ function wrapLifecycleMethod(
   method: Function,
   lifecycleName: lifecycleName
 ) {
-  return function(...args: any[]) {
+  return function(...lifecycleArguments: any[]) {
+    const componentInstance = this
     const tasks: Task[] = []
     const returnAs = (task: Task) => {
       tasks.push(task)
     }
-    applyMiddlewares(componentClass, this, lifecycleName, args, returnAs)
-    const returnValue = method.apply(this, args)
+    applyMiddlewares({
+      componentClass,
+      componentInstance,
+      lifecycleName,
+      lifecycleArguments,
+      returnAs,
+    })
+    const returnValue = method.apply(componentInstance, lifecycleArguments)
     return tasks.reduce((prevReturn, task) => task(prevReturn), returnValue)
   }
 }
