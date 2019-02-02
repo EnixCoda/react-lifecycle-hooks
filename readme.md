@@ -36,13 +36,38 @@ import { activate, addMiddleware } from 'react-lifecycle-hooks'
 import App from './path/to/app'
 
 // Example middleware
-function logEverything(
+function logEverything({
     componentClass,     // component class
     componentInstance,  // instance of `componentClass`
     lifecycleName,      // name of the lifecycle going to be invoked
     lifecycleArguments, // arguments will be passed to the lifecycle
-) {
+    returnAs,           // pass functions that accept & overwrite return value
+}) {
   console.log('Going to execute', lifecycleName, 'of', componentClass.displayName || componentClass.name, 'on instance', componentInstance, 'with arguments', lifecycleArguments)
+}
+
+function forcePureComponent({
+  lifecycleName,
+  lifecycleInstance,
+  lifecycleArguments: [nextProps, nextState],
+  returnAs,
+}) {
+  if (lifecycleName === 'shouldComponentUpdate') {
+    const { props, state } = lifecycleInstance
+    returnAs(returnValue => {
+      // Do nothing if the component's `shouldComponentUpdate` returns a boolean, which means it has been implemented
+      if (typeof returnValue === 'boolean') return returnValue
+      // Do what pure component does.
+      // This return value will overwrite the original return value!
+      return !(shallowEqual(props, nextProps) && shallowEqual(state, nextState))
+    })
+
+    returnAs(shouldUpdate => {
+      // One more good news!
+      // You can use multiple returnAs, they will be chained so that you can modify return value multiple times.
+      return shouldUpdate
+    })
+  }
 }
 
 const removeLogMiddleware = addMiddleware(logEverything)
