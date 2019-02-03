@@ -1,5 +1,11 @@
 import compareVersions = require('compare-versions')
 import * as React from 'react'
+import {
+  legacyShouldComponentUpdate,
+  latestShouldComponentUpdate,
+  defaultGetDerivedStateFromProps,
+  defaultShouldComponentUpdate,
+} from './methods'
 
 let theReact: typeof React
 try {
@@ -35,7 +41,9 @@ interface Middleware {
   (heartbeat: HeartBeat): void
 }
 
-interface RemoveMiddleware extends Function {}
+interface RemoveMiddleware {
+  (): void
+}
 
 export function addMiddleware(middleware: Middleware): RemoveMiddleware {
   const uniqueMiddleware = middleware.bind(null)
@@ -82,78 +90,89 @@ type lifecycleSlot =
     }
   | lifecycleName
 
-let instanceLifecycles: lifecycleSlot[] = []
-let instancePureLifecycles: lifecycleSlot[] = []
+let componentLifecycles: lifecycleSlot[] = [] // for React.Component
+let pureComponentLifecycles: lifecycleSlot[] = [] // for React.PureComponent
 let staticLifecycles: lifecycleSlot[] = []
 
-const lifecycles: {
-  [key: string]: {
-    [key: string]: lifecycleSlot[]
-  }
-} = {
-  instance: {
-    common: [
-      { name: 'componentDidMount' },
-      { name: 'render' },
-      { name: 'componentDidUpdate' },
-      { name: 'componentWillUnmount' },
-      { name: 'componentDidCatch' },
-    ],
-    pure: [
-      {
-        name: 'shouldComponentUpdate',
-        default: function shouldComponentUpdate() {
-          return true
-        },
-      },
-    ],
-    legacy: [
-      { name: 'componentWillMount' },
-      { name: 'componentWillReceiveProps' },
-      { name: 'componentWillUpdate' },
-    ],
-    latest: [
-      {
-        name: 'getSnapshotBeforeUpdate',
-        default: function getSnapshotBeforeUpdate(): null {
-          return null
-        },
-      },
-    ],
-  },
-  statics: {
-    common: [],
-    legacy: [],
-    latest: [
-      {
-        name: 'getDerivedStateFromProps',
-        default: function getDerivedStateFromProps(): null {
-          return null
-        },
-      },
-    ],
-  },
+function mapForPureComponentLifecycles(
+  shouldComponentUpdate: typeof legacyShouldComponentUpdate | typeof latestShouldComponentUpdate
+): lifecycleSlot[] {
+  return componentLifecycles.map(lifecycle => {
+    const lifecycleName = typeof lifecycle === 'string' ? lifecycle : lifecycle.name
+    if (lifecycleName === 'shouldComponentUpdate') {
+      return {
+        name: lifecycleName,
+        default: shouldComponentUpdate,
+      } as lifecycleSlot
+    }
+    return lifecycle
+  })
 }
 
 type Compat = 'legacy' | 'latest' | 'all'
 
 function handleCompat(compat: Compat) {
-  const { instance, statics } = lifecycles
   switch (compat) {
     case 'legacy':
-      instancePureLifecycles = [...instance.common, ...instance.legacy]
-      instanceLifecycles = [...instancePureLifecycles, ...instance.pure]
-      staticLifecycles = [...statics.common, ...statics.legacy]
+      componentLifecycles = [
+        'componentWillMount',
+        'render',
+        'componentDidMount',
+        'componentWillReceiveProps',
+        {
+          name: 'shouldComponentUpdate',
+          default: defaultShouldComponentUpdate,
+        },
+        'componentWillUpdate',
+        'componentDidUpdate',
+        'componentWillUnmount',
+        'componentDidCatch',
+      ]
+      pureComponentLifecycles = mapForPureComponentLifecycles(legacyShouldComponentUpdate)
+      staticLifecycles = []
       return
     case 'latest':
-      instancePureLifecycles = [...instance.common, ...instance.latest]
-      instanceLifecycles = [...instancePureLifecycles, ...instance.pure]
-      staticLifecycles = [...statics.common, ...statics.latest]
+      componentLifecycles = [
+        'render',
+        'componentDidMount',
+        {
+          name: 'shouldComponentUpdate',
+          default: defaultShouldComponentUpdate,
+        },
+        'componentDidUpdate',
+        'componentWillUnmount',
+        'componentDidCatch',
+      ]
+      pureComponentLifecycles = mapForPureComponentLifecycles(latestShouldComponentUpdate)
+      staticLifecycles = [
+        {
+          name: 'getDerivedStateFromProps',
+          default: defaultGetDerivedStateFromProps,
+        },
+      ]
       return
     case 'all':
-      instancePureLifecycles = [...instance.common, ...instance.legacy, ...instance.latest]
-      instanceLifecycles = [...instancePureLifecycles, ...instance.pure]
-      staticLifecycles = [...statics.common, ...statics.legacy, ...statics.latest]
+      componentLifecycles = [
+        'componentWillMount',
+        'render',
+        'componentDidMount',
+        'componentWillReceiveProps',
+        {
+          name: 'shouldComponentUpdate',
+          default: defaultShouldComponentUpdate,
+        },
+        'componentWillUpdate',
+        'componentDidUpdate',
+        'componentWillUnmount',
+        'componentDidCatch',
+      ]
+      pureComponentLifecycles = mapForPureComponentLifecycles(legacyShouldComponentUpdate)
+      staticLifecycles = [
+        {
+          name: 'getDerivedStateFromProps',
+          default: defaultGetDerivedStateFromProps,
+        },
+      ]
       return
     default:
       if (compareVersions(theReact.version, '16.0.0') < 0) {
@@ -173,8 +192,6 @@ function applyOptions(options: Options) {
   handleCompat(options.compat)
 }
 
-function noop() {}
-
 const decorationMap = new Map()
 
 function decorate(componentType: ComponentClass) {
@@ -193,7 +210,7 @@ function decorate(componentType: ComponentClass) {
   }
 
   const isPureComponentClass = componentType.prototype instanceof theReact.PureComponent
-  const lifecyclesForTheClass = isPureComponentClass ? instancePureLifecycles : instanceLifecycles
+  const lifecyclesForTheClass = isPureComponentClass ? pureComponentLifecycles : componentLifecycles
 
   lifecyclesForTheClass.forEach(lifecycle => {
     const lifecycleName = typeof lifecycle === 'string' ? lifecycle : lifecycle.name
@@ -226,7 +243,9 @@ function decorate(componentType: ComponentClass) {
   return DecoratedClass
 }
 
-interface Deactivate extends Function {}
+interface Deactivate {
+  (): void
+}
 
 export function activate(options: Options = {}): Deactivate {
   if (options && options.React) {
