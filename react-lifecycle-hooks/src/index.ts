@@ -1,8 +1,6 @@
 import compareVersions = require('compare-versions')
 import * as React from 'react'
 import {
-  legacyShouldComponentUpdate,
-  latestShouldComponentUpdate,
   defaultGetDerivedStateFromProps,
   defaultShouldComponentUpdate,
 } from './methods'
@@ -91,59 +89,42 @@ type lifecycleSlot =
   | lifecycleName
 
 let componentLifecycles: lifecycleSlot[] = [] // for React.Component
-let pureComponentLifecycles: lifecycleSlot[] = [] // for React.PureComponent
+let pureComponentLifecycles: lifecycleSlot[] = [] // for React.PureComponent, it should not include `shouldComponentUpdate`
 let staticLifecycles: lifecycleSlot[] = []
-
-function mapForPureComponentLifecycles(
-  shouldComponentUpdate: typeof legacyShouldComponentUpdate | typeof latestShouldComponentUpdate
-): lifecycleSlot[] {
-  return componentLifecycles.map(lifecycle => {
-    const lifecycleName = typeof lifecycle === 'string' ? lifecycle : lifecycle.name
-    if (lifecycleName === 'shouldComponentUpdate') {
-      return {
-        name: lifecycleName,
-        default: shouldComponentUpdate,
-      } as lifecycleSlot
-    }
-    return lifecycle
-  })
-}
 
 type Compat = 'legacy' | 'latest' | 'all'
 
 function handleCompat(compat: Compat) {
   switch (compat) {
     case 'legacy':
-      componentLifecycles = [
+      pureComponentLifecycles = [
         'componentWillMount',
         'render',
         'componentDidMount',
         'componentWillReceiveProps',
-        {
-          name: 'shouldComponentUpdate',
-          default: defaultShouldComponentUpdate,
-        },
         'componentWillUpdate',
         'componentDidUpdate',
         'componentWillUnmount',
         'componentDidCatch',
       ]
-      pureComponentLifecycles = mapForPureComponentLifecycles(legacyShouldComponentUpdate)
+      componentLifecycles = pureComponentLifecycles.concat({
+        name: 'shouldComponentUpdate',
+        default: defaultShouldComponentUpdate,
+      })
       staticLifecycles = []
       return
     case 'latest':
-      componentLifecycles = [
+      pureComponentLifecycles = [
         'render',
         'componentDidMount',
-        {
-          name: 'shouldComponentUpdate',
-          default: defaultShouldComponentUpdate,
-        },
         'componentDidUpdate',
         'componentWillUnmount',
         'componentDidCatch',
       ]
-      pureComponentLifecycles = mapForPureComponentLifecycles(latestShouldComponentUpdate)
+      componentLifecycles = pureComponentLifecycles.concat({
+        name: 'shouldComponentUpdate',
+        default: defaultShouldComponentUpdate,
+      })
       staticLifecycles = [
         {
           name: 'getDerivedStateFromProps',
@@ -152,21 +133,20 @@ function handleCompat(compat: Compat) {
       ]
       return
     case 'all':
-      componentLifecycles = [
+      pureComponentLifecycles = [
         'componentWillMount',
         'render',
         'componentDidMount',
         'componentWillReceiveProps',
-        {
-          name: 'shouldComponentUpdate',
-          default: defaultShouldComponentUpdate,
-        },
         'componentWillUpdate',
         'componentDidUpdate',
         'componentWillUnmount',
         'componentDidCatch',
       ]
-      pureComponentLifecycles = mapForPureComponentLifecycles(legacyShouldComponentUpdate)
+      componentLifecycles = pureComponentLifecycles.concat({
+        name: 'shouldComponentUpdate',
+        default: defaultShouldComponentUpdate,
+      })
       staticLifecycles = [
         {
           name: 'getDerivedStateFromProps',
