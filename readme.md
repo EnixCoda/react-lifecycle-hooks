@@ -40,13 +40,13 @@ function logEverything({
 
 // Do you believe, this single middleware can turn every component class into React.PureComponent?
 function forcePureComponent({
+  componentInstance,
   lifecycleName,
-  lifecycleInstance,
   lifecycleArguments: [nextProps, nextState],
   returnAs,
 }) {
   if (lifecycleName === 'shouldComponentUpdate') {
-    const { props, state } = lifecycleInstance
+    const { props, state } = componentInstance
     returnAs(returnValue => {
       // Do nothing if the component's `shouldComponentUpdate` returns a boolean, which means it has been implemented
       if (typeof returnValue === 'boolean') return returnValue
