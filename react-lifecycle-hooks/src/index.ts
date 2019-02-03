@@ -48,7 +48,7 @@ export function addMiddleware(middleware: Middleware): RemoveMiddleware {
 
 function wrapLifecycleMethod(
   componentClass: ComponentClass,
-  method: Function,
+  method: Function | undefined,
   lifecycleName: lifecycleName
 ) {
   return function(...lifecycleArguments: any[]) {
@@ -69,16 +69,18 @@ function wrapLifecycleMethod(
       lifecycleArguments,
       returnAs,
     })
-    const returnValue = method.apply(componentInstance, lifecycleArguments)
+    const returnValue = method ? method.apply(componentInstance, lifecycleArguments) : undefined
     shouldNotAddTaskAnymore = true
     return tasks.reduce((prevReturn, task) => task(prevReturn), returnValue)
   }
 }
 
-interface lifecycleSlot {
-  name: lifecycleName
-  default?: Function
-}
+type lifecycleSlot =
+  | {
+      name: lifecycleName
+      default?: Function
+    }
+  | lifecycleName
 
 let instanceLifecycles: lifecycleSlot[] = []
 let instancePureLifecycles: lifecycleSlot[] = []
@@ -194,21 +196,31 @@ function decorate(componentType: ComponentClass) {
   const lifecyclesForTheClass = isPureComponentClass ? instancePureLifecycles : instanceLifecycles
 
   lifecyclesForTheClass.forEach(lifecycle => {
-    const method = componentClass.prototype[lifecycle.name] as Function | undefined
-    ;(DecoratedClass.prototype as any)[lifecycle.name] = wrapLifecycleMethod(
+    const lifecycleName = typeof lifecycle === 'string' ? lifecycle : lifecycle.name
+    const method = componentClass.prototype[lifecycleName] as Function | undefined
+    ;(DecoratedClass.prototype as any)[lifecycleName] = wrapLifecycleMethod(
       componentClass,
-      typeof method === 'function' ? method : lifecycle.default || noop,
-      lifecycle.name
+      typeof method === 'function'
+        ? method
+        : typeof lifecycle === 'string'
+        ? undefined
+        : lifecycle.default,
+      lifecycleName
     )
   })
 
   // Seems somehow redundant to above :(
   staticLifecycles.forEach(lifecycle => {
-    const method = (componentClass as any)[lifecycle.name] as Function | undefined
-    ;(DecoratedClass as any)[lifecycle.name] = wrapLifecycleMethod(
+    const lifecycleName = typeof lifecycle === 'string' ? lifecycle : lifecycle.name
+    const method = (componentClass as any)[lifecycleName] as Function | undefined
+    ;(DecoratedClass as any)[lifecycleName] = wrapLifecycleMethod(
       componentClass,
-      typeof method === 'function' ? method : lifecycle.default,
-      lifecycle.name
+      typeof method === 'function'
+        ? method
+        : typeof lifecycle === 'string'
+        ? undefined
+        : lifecycle.default,
+      lifecycleName
     )
   })
   return DecoratedClass
