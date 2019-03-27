@@ -1,9 +1,6 @@
 import compareVersions = require('compare-versions')
 import * as React from 'react'
-import {
-  defaultGetDerivedStateFromProps,
-  defaultShouldComponentUpdate,
-} from './methods'
+import { defaultGetDerivedStateFromProps, defaultShouldComponentUpdate } from './methods'
 
 let theReact: typeof React
 try {
@@ -166,23 +163,42 @@ function handleCompat(compat: Compat) {
 interface Options {
   compat?: Compat
   React?: typeof React
+  transformToClass?: boolean
+  fill?: boolean
 }
 
 function applyOptions(options: Options) {
   handleCompat(options.compat)
 }
 
+function transformToClass<P>(functionComponent: React.SFC<P>) {
+  return class TransformedComponent extends React.Component<P> {
+    static displayName = functionComponent.displayName || functionComponent.name
+    state = {} // for getDerivedStateFromProps
+    render() {
+      return functionComponent(this.props)
+    }
+  }
+}
+
+function noop() {}
+
 const decorationMap = new Map()
 
-function decorate(componentType: ComponentClass) {
+function decorate(componentType: ComponentClass, options: Options) {
   if (
     !(componentType.prototype instanceof theReact.Component) &&
     !(componentType as any).isReactTopLevelWrapper // for React v15
   ) {
-    const render = componentType as React.SFC
-    const decorated = wrapLifecycleMethod(componentType, render, 'render') as React.SFC
-    decorated.displayName = componentType.displayName || componentType.name
-    return decorated
+    if (options.transformToClass) {
+      const decorated = decorate(transformToClass(<React.SFC>componentType), options)
+      return decorated
+    } else {
+      const render = componentType as React.SFC
+      const decorated = wrapLifecycleMethod(componentType, render, 'render') as React.SFC
+      decorated.displayName = componentType.displayName || componentType.name
+      return decorated
+    }
   }
   const componentClass = componentType as React.ComponentClass
   class DecoratedClass extends componentClass {
@@ -200,7 +216,9 @@ function decorate(componentType: ComponentClass) {
       typeof method === 'function'
         ? method
         : typeof lifecycle === 'string'
-        ? undefined
+        ? options.fill
+          ? noop
+          : undefined
         : lifecycle.default,
       lifecycleName
     )
@@ -246,7 +264,7 @@ export function activate(options: Options = {}): Deactivate {
     if (typeof type !== 'function') return createElement.apply(this, arguments)
     const componentClass = type
     if (!decorationMap.has(componentClass)) {
-      decorationMap.set(componentClass, decorate(componentClass))
+      decorationMap.set(componentClass, decorate(componentClass, options))
     }
     const decorated = decorationMap.get(componentClass)
     return createElement.apply(this, [decorated].concat(Array.prototype.slice.call(arguments, 1)))
